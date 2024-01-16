@@ -55,7 +55,7 @@ class Evaluator:
     def evaluate(self, dataset_list, metrics_list, show_progressbar=False):
         """Evaluate a set of metrics on a set of datasets"""
         config = self.config
-        metrics_list = metrics_list + [Count()]  # Count metrics are always run
+        metrics_list = [Count()] + metrics_list  # Count metrics are always run
         metric_names = utils.validate_metrics_list(metrics_list)
         dataset_names = [dataset.get_name() for dataset in dataset_list]
         output_res = {}
@@ -122,11 +122,15 @@ class Evaluator:
                     for c_cls in class_list:
                         res['COMBINED_SEQ'][c_cls] = {}
                         for metric, metric_name in zip(metrics_list, metric_names):
-                            curr_res = {seq_key: seq_value[c_cls][metric_name] for seq_key, seq_value in res.items() if
-                                        seq_key != 'COMBINED_SEQ'}
+                            if metric_name=='HOTA':
+                                curr_res = {seq_key: (seq_value[c_cls][metric_name] | seq_value[c_cls]['Count']) for seq_key, seq_value in res.items()
+                                            if seq_key != 'COMBINED_SEQ'}
+                            else:
+                                curr_res = {seq_key: seq_value[c_cls][metric_name] for seq_key, seq_value in res.items()
+                                            if seq_key != 'COMBINED_SEQ'}
                             res['COMBINED_SEQ'][c_cls][metric_name] = metric.combine_sequences(curr_res)
                     # combine classes
-                    if dataset.should_classes_combine:
+                    if True:
                         combined_cls_keys += ['cls_comb_cls_av', 'cls_comb_det_av', 'all']
                         res['COMBINED_SEQ']['cls_comb_cls_av'] = {}
                         res['COMBINED_SEQ']['cls_comb_det_av'] = {}
